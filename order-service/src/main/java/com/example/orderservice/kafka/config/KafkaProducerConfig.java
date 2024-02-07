@@ -30,7 +30,9 @@ public class KafkaProducerConfig {
 
     @Bean
     public ProducerFactory<String, String> producerFactory() {
-        return new DefaultKafkaProducerFactory<>(producerConfig());
+        DefaultKafkaProducerFactory<String, String> pf = new DefaultKafkaProducerFactory<>(producerConfig());
+        pf.setTransactionIdPrefix("tx-");
+        return pf;
     }
 
     @Bean

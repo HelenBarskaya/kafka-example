@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Slf4j
@@ -30,6 +31,7 @@ public class Consumer {
     }
 
     @KafkaListener(topics = topicName, groupId = "paymentsGroup")
+    @Transactional
     public void listenMessages(String data){
         ScoreDto dto;
         try {
@@ -38,6 +40,7 @@ public class Consumer {
             throw new RuntimeException(JSON_WAS_NOT_PROCESSED);
         }
         log.info(MESSAGE_RECEIVED);
+
         paymentRepository.save(new Score(dto.getId(), dto.getTotalCost(), Status.CREATED));
         log.info(SCORE_SUCCESSFULLY_SAVED);
     }

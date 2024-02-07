@@ -28,6 +28,7 @@ public class Producer {
         this.kafkaTemplate = kafkaTemplate;
     }
 
+
     public String sendScore(Score score){
         String message;
 
