@@ -7,7 +7,7 @@ networks:
 
 services:
   zookeeper:
-    image: zookeeper:3.7.0
+    image: debezium/zookeeper:2.5
     container_name: zookeeper
     restart: "no"
     networks:
@@ -16,7 +16,7 @@ services:
       - "2181:2181"
 
   kafka:
-    image: obsidiandynamics/kafka
+    image: debezium/kafka:2.5
     container_name: kafka
     restart: "no"
     networks:
@@ -26,10 +26,10 @@ services:
     environment:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: DOCKER_INTERNAL:PLAINTEXT,DOCKER_EXTERNAL:PLAINTEXT
       KAFKA_LISTENERS: DOCKER_INTERNAL://:29092,DOCKER_EXTERNAL://:9092
-      KAFKA_ADVERTISED_LISTENERS: DOCKER_INTERNAL://kafka:29092,DOCKER_EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9092
+      KAFKA_ADVERTISED_LISTENERS: DOCKER_INTERNAL://kafka:29092,DOCKER_EXTERNAL://localhost:9092
       KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER_INTERNAL
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
-      KAFKA_BROKER_ID: 1
+      ZOOKEEPER_CONNECT: "zookeeper:2181"
+      BROKER_ID: 1
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper
@@ -46,3 +46,47 @@ services:
       KAFKA_BROKERCONNECT: "kafka:29092"
     depends_on:
       - "kafka"
+
+  postgres-orders:
+    image: debezium/postgres
+    container_name: postgres-orders
+    restart: "always"
+    environment:
+      POSTGRES_DB: "orders"
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: "pass"
+    networks:
+      - kafka-net
+    ports:
+      - "5416:5432"
+
+  postgres-payments:
+    image: debezium/postgres
+    container_name: postgres-payments
+    restart: "always"
+    environment:
+      POSTGRES_DB: "payments"
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: "pass"
+    networks:
+      - kafka-net
+    ports:
+      - "5415:5432"
+
+  debezium-connect:
+    image: debezium/connect:2.5
+    container_name: debezium-connect
+    restart: "no"
+    environment:
+      GROUP_ID: 1
+      BOOTSTRAP_SERVERS: "kafka:29092"
+      CONFIG_STORAGE_TOPIC: my_connect_configs
+      OFFSET_STORAGE_TOPIC: my_connect_offsets
+      STATUS_STORAGE_TOPIC: my_connect_statuses
+    ports:
+      - "8083:8083"
+    networks:
+      - kafka-net
+    depends_on:
+      - kafka
+      - postgres-orders

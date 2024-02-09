@@ -2,6 +2,7 @@ package com.example.orderservice.controller;
 
 import com.example.orderservice.model.Order;
 import com.example.orderservice.service.OrderService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +19,7 @@ public class OrderController {
     }
 
     @PostMapping
-    public String saveOrder(@RequestBody Order order) {
+    public String saveOrder(@RequestBody Order order) throws JsonProcessingException {
         return service.saveOrder(order);
     }
 }
